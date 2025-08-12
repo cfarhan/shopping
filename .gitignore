@@ -1,0 +1,68 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.python-version
+.mypy_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.build/
+build/
+dist/
+
+# Flask / Runtime
+instance/
+shopping/app.db
+shopping/*.sqlite3
+
+# Node / React
+node_modules/
+**/node_modules/
+.npm/
+.npmrc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.eslintcache
+.parcel-cache/
+.next/
+.nuxt/
+coverage/
+shopping/frontend/build/
+
+# Env files
+.env
+*.env
+shopping/.env
+
+# Terraform
+.terraform/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars
+*.tfvars
+*.tfvars.json
+
+# Logs
+*.log
+logs/
+
+# Misc
+awscliv2.zip
+terraform_*.zip
+aws/ 
