@@ -34,7 +34,7 @@ function App() {
       <div className="App">
         <nav className="navbar">
           <div className="navbar-content">
-            <Link to="/" className="navbar-brand">Flask Shop</Link>
+            <Link to="/" className="navbar-brand">Shop</Link>
             
             <div className="navbar-nav">
               <Link to="/" className="nav-link">Home</Link>

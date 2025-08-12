@@ -12,7 +12,7 @@ function Landing() {
       {/* Hero Section */}
       <div className="hero-section">
         <div className="container">
-          <h1 className="hero-title">Welcome to Flask Shop! 🛍️</h1>
+          <h1 className="hero-title">Welcome to Shop! 🛍️</h1>
           <p className="hero-subtitle">Your one-stop shop for everything you need!</p>
           
           <div className="hero-buttons">
