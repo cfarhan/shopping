@@ -22,10 +22,14 @@ app = Flask(__name__)
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+DISABLE_DB = os.environ.get('DISABLE_DB', '0') == '1'
 
 # Database configuration
 def get_database_url():
     """Resolve database URL from env. Supports DATABASE_URL or discrete DB_* vars."""
+    if DISABLE_DB:
+        return 'sqlite:///:memory:'
+
     # Prefer a provided DATABASE_URL (Heroku style)
     database_url = os.environ.get('DATABASE_URL')
     if database_url:
@@ -608,12 +612,14 @@ def legacy_checkout():
 def health_check():
     """Health check endpoint"""
     try:
-        # Test database connection
-        db.session.execute('SELECT 1')
+        db_status = 'disabled' if DISABLE_DB else 'connected'
+        if not DISABLE_DB:
+            # Test database connection
+            db.session.execute('SELECT 1')
         return jsonify({
             'status': 'healthy',
             'message': 'Flask backend is running',
-            'database': 'connected'
+            'database': db_status
         }), 200
     except Exception as e:
         app.logger.error(f"Health check failed: {str(e)}")
