@@ -1,0 +1,102 @@
+name: Deploy to Heroku with RDS
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+      STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+      TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+      TF_STATE_KEY: ${{ secrets.TF_STATE_KEY || 'shopping-app/rds/terraform.tfstate' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Ensure Terraform state bucket exists (if configured)
+        if: env.TF_STATE_BUCKET != ''
+        shell: bash
+        run: |
+          set -e
+          if aws s3api head-bucket --bucket "$TF_STATE_BUCKET" 2>/dev/null; then
+            echo "State bucket exists: $TF_STATE_BUCKET"
+          else
+            echo "Creating state bucket: $TF_STATE_BUCKET"
+            if [ "$AWS_REGION" = "us-east-1" ]; then
+              aws s3api create-bucket --bucket "$TF_STATE_BUCKET"
+            else
+              aws s3api create-bucket --bucket "$TF_STATE_BUCKET" --create-bucket-configuration LocationConstraint="$AWS_REGION"
+            fi
+            aws s3api put-bucket-versioning --bucket "$TF_STATE_BUCKET" --versioning-configuration Status=Enabled || true
+            aws s3api put-bucket-encryption --bucket "$TF_STATE_BUCKET" --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' || true
+          fi
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init (RDS only)
+        working-directory: terraform_rds
+        shell: bash
+        run: |
+          if [ -n "$TF_STATE_BUCKET" ]; then
+            terraform init \
+              -backend-config="bucket=$TF_STATE_BUCKET" \
+              -backend-config="key=$TF_STATE_KEY" \
+              -backend-config="region=$AWS_REGION" \
+              -backend-config="encrypt=true"
+          else
+            terraform init
+          fi
+
+      - name: Terraform Apply (RDS)
+        working-directory: terraform_rds
+        run: terraform apply -auto-approve
+
+      - name: Get DATABASE_URL from Terraform
+        id: tfout
+        shell: bash
+        run: |
+          DB_URL=$(terraform -chdir=terraform_rds output -raw database_url)
+          echo "DB_URL=$DB_URL" >> $GITHUB_ENV
+          # Mask in logs
+          echo "::add-mask::$DB_URL"
+
+      - name: Setup Heroku CLI
+        uses: heroku/actions/setup@v2
+        with:
+          # If you need a specific version, set it here; defaults to latest
+          # version: '8.7.1'
+          email: ${{ secrets.HEROKU_EMAIL }}
+          api_key: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Configure Git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy to Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          STRIPE_SECRET_KEY: ${{ env.STRIPE_SECRET_KEY }}
+          STRIPE_PUBLISHABLE_KEY: ${{ env.STRIPE_PUBLISHABLE_KEY }}
+        run: |
+          chmod +x scripts/deploy-heroku.sh
+          ./scripts/deploy-heroku.sh "$HEROKU_APP_NAME" --database-url "$DB_URL" 

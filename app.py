@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
 from flask_cors import CORS
 from datetime import datetime, timedelta
@@ -18,7 +18,9 @@ load_dotenv()
 from database import init_db
 from models import User, CartItem, Order, Product
 
-app = Flask(__name__)
+# Point Flask to serve React build manually (disable default static handler)
+app = Flask(__name__, static_folder=None)
+FRONTEND_BUILD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend', 'build')
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
@@ -628,6 +630,18 @@ def health_check():
             'message': 'Health check failed',
             'error': str(e)
         }), 503
+
+# Serve React build (SPA)
+@app.route('/')
+def serve_index():
+    return send_from_directory(FRONTEND_BUILD_DIR, 'index.html')
+
+@app.route('/<path:path>')
+def serve_static_proxy(path):
+    full_path = os.path.join(FRONTEND_BUILD_DIR, path)
+    if os.path.exists(full_path) and os.path.isfile(full_path):
+        return send_from_directory(FRONTEND_BUILD_DIR, path)
+    return send_from_directory(FRONTEND_BUILD_DIR, 'index.html')
 
 @app.route('/admin/seed-products', methods=['POST'])
 def seed_products():

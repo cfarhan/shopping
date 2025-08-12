@@ -18,8 +18,6 @@ env/
 .coverage
 .coverage.*
 htmlcov/
-.build/
-build/
 dist/
 
 # Flask / Runtime
@@ -41,8 +39,6 @@ yarn-error.log*
 .next/
 .nuxt/
 coverage/
-shopping/frontend/build/
-
 # Env files
 .env
 *.env
