@@ -55,11 +55,8 @@ create_heroku_app() {
         echo -e "${GREEN}✅ Heroku app created: $APP_NAME${NC}"
     fi
 
-    # Set monorepo buildpack and web root
-    heroku buildpacks:clear -a $APP_NAME || true
-    heroku buildpacks:add -a $APP_NAME https://github.com/lstoll/heroku-buildpack-monorepo || true
-    heroku buildpacks:add -a $APP_NAME heroku/python
-    heroku config:set -a $APP_NAME APP_BASE="shopping"
+    # Ensure Python buildpack
+    heroku buildpacks:add -a $APP_NAME heroku/python || true
 }
 
 maybe_add_postgres() {
@@ -96,14 +93,15 @@ deploy_app() {
         heroku git:remote -a $APP_NAME
     fi
     git add .
-    git commit -m "Deploy to Heroku (monorepo)" --allow-empty
+    git commit -m "Deploy to Heroku" --allow-empty
     git push heroku HEAD:main
     echo -e "${GREEN}✅ App deployed successfully${NC}"
 }
 
 run_migrations() {
     echo -e "${YELLOW}🗃️ Running database migrations...${NC}"
-    heroku run -a $APP_NAME "cd shopping && flask db upgrade" || true
+    # Run from repo root (no subdir cd)
+    heroku run -a $APP_NAME "flask db upgrade" || true
     echo -e "${GREEN}✅ Database migrations complete${NC}"
 }
 

@@ -1,2 +1,2 @@
-web: cd shopping && gunicorn app:app
-release: cd shopping && flask db upgrade 
+web: gunicorn app:app
+release: flask db upgrade 
