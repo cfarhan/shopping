@@ -16,12 +16,8 @@ load_dotenv()
 # Import database and models
 from database import init_db
 from models import User, CartItem, Order, Product
-from aws_config import get_aws_config
 
 app = Flask(__name__)
-
-# AWS Configuration (only region used if needed; no S3/Secrets)
-aws_config = get_aws_config()
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
@@ -591,15 +587,14 @@ def legacy_checkout():
 # System Routes
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for load balancer"""
+    """Health check endpoint"""
     try:
         # Test database connection
         db.session.execute('SELECT 1')
         return jsonify({
-            'status': 'healthy', 
+            'status': 'healthy',
             'message': 'Flask backend is running',
-            'database': 'connected',
-            'aws_region': aws_config['region']
+            'database': 'connected'
         }), 200
     except Exception as e:
         app.logger.error(f"Health check failed: {str(e)}")
