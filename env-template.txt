@@ -1,0 +1,22 @@
+# Flask Configuration
+SECRET_KEY=your-secret-key-here-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-here-change-in-production
+
+# Database Configuration
+# Local development uses SQLite by default
+# DATABASE_URL will be automatically set by Heroku in production
+# For local PostgreSQL testing: postgresql://username:password@localhost:5432/dbname
+DATABASE_URL=sqlite:///app.db
+
+# Stripe Configuration (get these from https://dashboard.stripe.com/apikeys)
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
+STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key_here
+
+# Flask Environment
+FLASK_ENV=development
+
+# Port (Heroku will set this automatically)
+PORT=5000
+
+# Frontend API URL (for production deployment)
+# REACT_APP_API_URL=https://your-app-name.herokuapp.com 
