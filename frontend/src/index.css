@@ -301,74 +301,218 @@ body {
   border: 1px solid #ffeaa7;
 }
 
-/* Cart Styles */
-.cart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: var(--white);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  box-shadow: var(--shadow);
+/* Stripe Payment Styles */
+.checkout-form {
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
 }
 
-.cart-item-info h4 {
-  margin: 0 0 0.5rem 0;
-  color: var(--dark-gray);
+.payment-info {
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.cart-item-info p {
-  margin: 0;
+.payment-info h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.card-element-container {
+  margin: 20px 0;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.pay-button {
+  width: 100%;
+  padding: 15px;
+  background: #5469d4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pay-button:hover:not(:disabled) {
+  background: #4054b2;
+}
+
+.pay-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.pay-button.processing {
+  background: #999;
+}
+
+.payment-security {
+  text-align: center;
+  margin-top: 15px;
   color: #666;
 }
 
-.cart-item-total {
-  font-size: 1.2rem;
+.error-message {
+  background: #fee;
+  color: #c33;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  border-left: 4px solid #c33;
+}
+
+.success-message {
+  background: #efe;
+  color: #363;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  border-left: 4px solid #363;
+}
+
+/* Cart Styles */
+.cart {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.cart h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 50px 20px;
+  color: #666;
+}
+
+.cart-items {
+  margin-bottom: 30px;
+}
+
+.cart-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.item-info h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.item-info p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.item-total {
   font-weight: bold;
-  color: var(--primary-color);
+  color: #333 !important;
+}
+
+.cart-summary {
+  border-top: 2px solid #ddd;
+  padding-top: 20px;
 }
 
 .cart-total {
-  border-top: 2px solid var(--border-color);
-  padding-top: 1rem;
-  margin: 2rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.cart-total-amount {
-  color: var(--primary-color);
-}
-
-/* Empty States */
-.empty-state {
   text-align: center;
-  padding: 3rem;
-  background: var(--light-gray);
-  border-radius: 8px;
-  margin: 2rem 0;
+  margin-bottom: 25px;
 }
 
-.empty-state h3 {
-  color: var(--secondary-color);
-  margin-bottom: 1rem;
+.cart-total h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.5em;
 }
 
-.empty-state p {
-  color: #666;
-  margin-bottom: 1.5rem;
+.checkout-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
 }
 
-/* Loading States */
+.stripe-checkout-button, .legacy-checkout-button {
+  width: 100%;
+  max-width: 300px;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.stripe-checkout-button {
+  background: #635bff;
+  color: white;
+}
+
+.stripe-checkout-button:hover:not(:disabled) {
+  background: #5a52e3;
+  transform: translateY(-1px);
+}
+
+.legacy-checkout-button {
+  background: #28a745;
+  color: white;
+}
+
+.legacy-checkout-button:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.stripe-checkout-button:disabled, .legacy-checkout-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.stripe-checkout {
+  width: 100%;
+  max-width: 500px;
+}
+
+.cancel-payment-button {
+  width: 100%;
+  padding: 10px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.3s ease;
+}
+
+.cancel-payment-button:hover {
+  background: #c82333;
+}
+
 .loading {
   text-align: center;
-  padding: 2rem;
-  color: var(--secondary-color);
+  padding: 50px;
+  color: #666;
+  font-size: 18px;
 }
 
 /* Promotional Banner */
@@ -415,5 +559,23 @@ body {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
+  }
+
+  .cart {
+    padding: 10px;
+  }
+  
+  .checkout-form {
+    margin: 20px 10px;
+    padding: 15px;
+  }
+  
+  .checkout-options {
+    flex-direction: column;
+  }
+  
+  .stripe-checkout-button, .legacy-checkout-button {
+    width: 100%;
+    max-width: none;
   }
 }
