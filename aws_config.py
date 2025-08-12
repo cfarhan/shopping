@@ -1,57 +1,9 @@
 import boto3
-import json
 import os
 from botocore.exceptions import ClientError, NoCredentialsError
 import logging
 
 logger = logging.getLogger(__name__)
-
-class AWSSecretsManager:
-    """AWS Secrets Manager utility class"""
-    
-    def __init__(self, region_name=None):
-        self.region_name = region_name or os.environ.get('AWS_REGION', 'us-east-1')
-        try:
-            self.client = boto3.client('secretsmanager', region_name=self.region_name)
-        except NoCredentialsError:
-            logger.warning("AWS credentials not found. Secrets Manager will not be available.")
-            self.client = None
-    
-    def get_secret(self, secret_name):
-        """Retrieve a secret from AWS Secrets Manager"""
-        if not self.client:
-            return None
-            
-        try:
-            response = self.client.get_secret_value(SecretId=secret_name)
-            
-            # Parse JSON secrets
-            if 'SecretString' in response:
-                secret = response['SecretString']
-                try:
-                    return json.loads(secret)
-                except json.JSONDecodeError:
-                    return secret
-            else:
-                # Binary secrets
-                return response['SecretBinary']
-                
-        except ClientError as e:
-            logger.error(f"Error retrieving secret {secret_name}: {e}")
-            return None
-    
-    def get_database_credentials(self, secret_name):
-        """Get database credentials from secrets manager"""
-        secret = self.get_secret(secret_name)
-        if secret and isinstance(secret, dict):
-            return {
-                'username': secret.get('username'),
-                'password': secret.get('password'),
-                'host': secret.get('host'),
-                'port': secret.get('port', 5432),
-                'dbname': secret.get('dbname')
-            }
-        return None
 
 class S3Manager:
     """S3 utility class for image storage"""
@@ -119,7 +71,6 @@ def get_aws_config():
     """Get AWS configuration from environment or defaults"""
     return {
         'region': os.environ.get('AWS_REGION', 'us-east-1'),
-        'db_secret_name': os.environ.get('DB_SECRET_NAME', 'shopping-app/database'),
         's3_bucket': os.environ.get('S3_BUCKET_NAME'),
         'environment': os.environ.get('FLASK_ENV', 'development')
     } 

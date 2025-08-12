@@ -16,39 +16,27 @@ load_dotenv()
 # Import database and models
 from database import init_db
 from models import User, CartItem, Order, Product
-from aws_config import AWSSecretsManager, S3Manager, get_aws_config
+from aws_config import get_aws_config
 
 app = Flask(__name__)
 
-# AWS Configuration
+# AWS Configuration (only region used if needed; no S3/Secrets)
 aws_config = get_aws_config()
-secrets_manager = AWSSecretsManager(aws_config['region'])
-s3_manager = S3Manager(aws_config['s3_bucket'], aws_config['region'])
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
-# Database configuration with AWS Secrets Manager
+# Database configuration
 def get_database_url():
-    """Get database URL from AWS Secrets Manager or environment variables"""
-    
-    # For local development, use environment variable
-    if os.environ.get('FLASK_ENV') == 'development':
-        return os.environ.get('DATABASE_URL', 'sqlite:///app.db')
-    
-    # For production, use AWS Secrets Manager
-    db_secret_name = aws_config['db_secret_name']
-    db_credentials = secrets_manager.get_database_credentials(db_secret_name)
-    
-    if db_credentials:
-        return f"postgresql://{db_credentials['username']}:{db_credentials['password']}@{db_credentials['host']}:{db_credentials['port']}/{db_credentials['dbname']}"
-    
-    # Fallback to environment variable
+    """Resolve database URL from environment; fallback to SQLite in dev."""
     database_url = os.environ.get('DATABASE_URL')
     if database_url and database_url.startswith('postgres://'):
         database_url = database_url.replace('postgres://', 'postgresql://', 1)
-    
-    return database_url or 'sqlite:///app.db'
+    if database_url:
+        return database_url
+    if os.environ.get('FLASK_ENV') == 'development':
+        return 'sqlite:///app.db'
+    return 'sqlite:///app.db'
 
 app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -107,22 +95,6 @@ def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def upload_image_to_s3(file, filename):
-    """Upload image to S3 and return URL"""
-    if not s3_manager.client:
-        app.logger.warning("S3 not configured, skipping image upload")
-        return None
-    
-    # Generate unique filename
-    unique_filename = f"products/{uuid.uuid4()}-{secure_filename(filename)}"
-    
-    # Upload to S3
-    return s3_manager.upload_file(
-        file, 
-        unique_filename, 
-        content_type=file.content_type
-    )
 
 # Authentication Routes
 @app.route('/v1/signup', methods=['POST'])
@@ -246,7 +218,8 @@ def create_product():
             if 'image' in request.files:
                 file = request.files['image']
                 if file and file.filename != '' and allowed_file(file.filename):
-                    image_url = upload_image_to_s3(file, file.filename)
+                    # This part is removed as S3 is no longer used
+                    pass
         else:
             # Handle JSON data
             data = request.get_json()
@@ -282,36 +255,6 @@ def create_product():
     except Exception as e:
         app.logger.error(f"Create product error: {str(e)}")
         db.session.rollback()
-        return jsonify({'error': 'Internal server error'}), 500
-
-# Image upload endpoint
-@app.route('/v1/upload-image', methods=['POST'])
-@jwt_required()
-def upload_image():
-    """Upload image to S3"""
-    try:
-        if 'image' not in request.files:
-            return jsonify({'error': 'No image file provided'}), 400
-        
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
-        
-        if not allowed_file(file.filename):
-            return jsonify({'error': 'File type not allowed'}), 400
-        
-        image_url = upload_image_to_s3(file, file.filename)
-        
-        if image_url:
-            return jsonify({
-                'message': 'Image uploaded successfully',
-                'image_url': image_url
-            }), 200
-        else:
-            return jsonify({'error': 'Failed to upload image'}), 500
-            
-    except Exception as e:
-        app.logger.error(f"Upload image error: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
 # Cart Routes
@@ -656,8 +599,7 @@ def health_check():
             'status': 'healthy', 
             'message': 'Flask backend is running',
             'database': 'connected',
-            'aws_region': aws_config['region'],
-            's3_configured': s3_manager.client is not None
+            'aws_region': aws_config['region']
         }), 200
     except Exception as e:
         app.logger.error(f"Health check failed: {str(e)}")
