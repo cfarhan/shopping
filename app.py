@@ -9,6 +9,7 @@ import json
 import uuid
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
+from urllib.parse import quote_plus
 
 # Load environment variables
 load_dotenv()
@@ -24,12 +25,30 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-
 
 # Database configuration
 def get_database_url():
-    """Resolve database URL from environment; fallback to SQLite in dev."""
+    """Resolve database URL from env. Supports DATABASE_URL or discrete DB_* vars."""
+    # Prefer a provided DATABASE_URL (Heroku style)
     database_url = os.environ.get('DATABASE_URL')
-    if database_url and database_url.startswith('postgres://'):
-        database_url = database_url.replace('postgres://', 'postgresql://', 1)
     if database_url:
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
         return database_url
+
+    # Compose from discrete env vars if available
+    db_user = os.environ.get('DB_USER')
+    db_password = os.environ.get('DB_PASSWORD')
+    db_host = os.environ.get('DB_HOST')
+    db_port = os.environ.get('DB_PORT', '5432')
+    db_name = os.environ.get('DB_NAME')
+    db_sslmode = os.environ.get('DB_SSLMODE')  # e.g., require
+
+    if db_host and db_user and db_name:
+        pwd = quote_plus(db_password or '')
+        url = f"postgresql://{db_user}:{pwd}@{db_host}:{db_port}/{db_name}"
+        if db_sslmode:
+            url = f"{url}?sslmode={db_sslmode}"
+        return url
+
+    # Fallbacks
     if os.environ.get('FLASK_ENV') == 'development':
         return 'sqlite:///app.db'
     return 'sqlite:///app.db'
